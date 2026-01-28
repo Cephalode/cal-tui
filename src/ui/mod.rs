@@ -9,15 +9,21 @@ use ratatui::{
     Terminal,
 };
 use std::io;
+use crate::calendar::CalendarState;
+use crate::views::MonthView;
 
 pub struct App {
     pub should_quit: bool,
+    pub state: CalendarState,
+    pub month_view: MonthView,
 }
 
 impl App {
     pub fn new() -> Self {
         Self {
             should_quit: false,
+            state: CalendarState::new(),
+            month_view: MonthView::new(),
         }
     }
 
@@ -50,25 +56,29 @@ impl App {
         Ok(())
     }
 
-    fn render(&self, frame: &mut ratatui::Frame) {
-        use ratatui::widgets::{Block, Borders, Paragraph};
-        use ratatui::layout::Alignment;
-
+    fn render(&mut self, frame: &mut ratatui::Frame) {
         let area = frame.area();
-        let block = Block::default()
-            .title("Clawd - Calendar Application")
-            .borders(Borders::ALL);
-        let paragraph = Paragraph::new("Welcome to Clawd!\n\nPress 'q' to quit.")
-            .block(block)
-            .alignment(Alignment::Center);
-
-        frame.render_widget(paragraph, area);
+        self.month_view.render(frame, area, &self.state);
     }
 
     fn handle_key(&mut self, key: KeyCode) {
         match key {
             KeyCode::Char('q') => self.should_quit = true,
             KeyCode::Esc => self.should_quit = true,
+            KeyCode::Left => self.month_view.move_selection(-1),
+            KeyCode::Right => self.month_view.move_selection(1),
+            KeyCode::Up => self.month_view.move_selection(-7),
+            KeyCode::Down => self.month_view.move_selection(7),
+            KeyCode::Char('h') => self.month_view.move_selection(-1),
+            KeyCode::Char('l') => self.month_view.move_selection(1),
+            KeyCode::Char('k') => self.month_view.move_selection(-7),
+            KeyCode::Char('j') => self.month_view.move_selection(7),
+            KeyCode::Char('n') => self.state.next_period(),
+            KeyCode::Char('p') => self.state.previous_period(),
+            KeyCode::Char('t') => {
+                self.state.go_to_today();
+                self.month_view.select_date(self.state.current_date);
+            },
             _ => {}
         }
     }

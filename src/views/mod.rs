@@ -1,9 +1,4 @@
 /// Views module for different UI views
-use ratatui::{
-    layout::Rect,
-    Frame,
-};
+pub mod month;
 
-pub trait View {
-    fn render(&mut self, frame: &mut Frame, area: Rect);
-}
+pub use month::MonthView;
