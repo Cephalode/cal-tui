@@ -1,0 +1,206 @@
+{
+  "version": 1,
+  "sessionId": "2bcb2199-3d56-4b08-8021-ee466776ac41",
+  "status": "running",
+  "startedAt": "2026-01-28T23:01:13.754Z",
+  "updatedAt": "2026-01-28T23:03:05.078Z",
+  "currentIteration": 0,
+  "maxIterations": 0,
+  "tasksCompleted": 0,
+  "isPaused": false,
+  "agentPlugin": "claude",
+  "trackerState": {
+    "plugin": "json",
+    "prdPath": "./prd.json",
+    "totalTasks": 30,
+    "tasks": [
+      {
+        "id": "US-001",
+        "title": "Initialize Rust project structure with ratatui",
+        "status": "open",
+        "completedInSession": false
+      },
+      {
+        "id": "US-002",
+        "title": "Design core data models for calendar and events",
+        "status": "open",
+        "completedInSession": false
+      },
+      {
+        "id": "US-003",
+        "title": "Implement in-memory event storage with CRUD operations",
+        "status": "open",
+        "completedInSession": false
+      },
+      {
+        "id": "US-004",
+        "title": "Build month calendar view layout",
+        "status": "open",
+        "completedInSession": false
+      },
+      {
+        "id": "US-005",
+        "title": "Implement vim-style navigation for month view",
+        "status": "open",
+        "completedInSession": false
+      },
+      {
+        "id": "US-006",
+        "title": "Create event creation modal with vim editing",
+        "status": "open",
+        "completedInSession": false
+      },
+      {
+        "id": "US-007",
+        "title": "Implement event editing and deletion",
+        "status": "open",
+        "completedInSession": false
+      },
+      {
+        "id": "US-008",
+        "title": "Build week view layout",
+        "status": "open",
+        "completedInSession": false
+      },
+      {
+        "id": "US-009",
+        "title": "Build day view layout",
+        "status": "open",
+        "completedInSession": false
+      },
+      {
+        "id": "US-010",
+        "title": "Build year view layout",
+        "status": "open",
+        "completedInSession": false
+      },
+      {
+        "id": "US-011",
+        "title": "Implement view switching with vim keys",
+        "status": "open",
+        "completedInSession": false
+      },
+      {
+        "id": "US-012",
+        "title": "Add vim-style text editing to all input fields",
+        "status": "open",
+        "completedInSession": false
+      },
+      {
+        "id": "US-013",
+        "title": "Implement event color coding by category",
+        "status": "open",
+        "completedInSession": false
+      },
+      {
+        "id": "US-014",
+        "title": "Add recurring event support",
+        "status": "open",
+        "completedInSession": false
+      },
+      {
+        "id": "US-015",
+        "title": "Implement reminders and notifications",
+        "status": "open",
+        "completedInSession": false
+      },
+      {
+        "id": "US-016",
+        "title": "Add event search with vim-style search",
+        "status": "open",
+        "completedInSession": false
+      },
+      {
+        "id": "US-017",
+        "title": "Implement event filtering",
+        "status": "open",
+        "completedInSession": false
+      },
+      {
+        "id": "US-018",
+        "title": "Add timezone support",
+        "status": "open",
+        "completedInSession": false
+      },
+      {
+        "id": "US-019",
+        "title": "Implement iCal import/export",
+        "status": "open",
+        "completedInSession": false
+      },
+      {
+        "id": "US-020",
+        "title": "Implement CSV import/export",
+        "status": "open",
+        "completedInSession": false
+      },
+      {
+        "id": "US-021",
+        "title": "Add command palette (vim :command style)",
+        "status": "open",
+        "completedInSession": false
+      },
+      {
+        "id": "US-022",
+        "title": "Add persistent event storage",
+        "status": "open",
+        "completedInSession": false
+      },
+      {
+        "id": "US-023",
+        "title": "Implement configuration file support",
+        "status": "open",
+        "completedInSession": false
+      },
+      {
+        "id": "US-024",
+        "title": "Add visual themes support",
+        "status": "open",
+        "completedInSession": false
+      },
+      {
+        "id": "US-025",
+        "title": "Add help system",
+        "status": "open",
+        "completedInSession": false
+      },
+      {
+        "id": "US-026",
+        "title": "Add keyboard command mode with visual feedback",
+        "status": "open",
+        "completedInSession": false
+      },
+      {
+        "id": "US-027",
+        "title": "Add undo/redo functionality",
+        "status": "open",
+        "completedInSession": false
+      },
+      {
+        "id": "US-028",
+        "title": "Add calendar integration hints (iCal URLs)",
+        "status": "open",
+        "completedInSession": false
+      },
+      {
+        "id": "US-029",
+        "title": "Implement copy/paste of events",
+        "status": "open",
+        "completedInSession": false
+      },
+      {
+        "id": "US-030",
+        "title": "Add event templates",
+        "status": "open",
+        "completedInSession": false
+      }
+    ]
+  },
+  "iterations": [],
+  "skippedTaskIds": [],
+  "cwd": "/Users/sqibo/devel/clawd",
+  "activeTaskIds": [
+    "US-001"
+  ],
+  "subagentPanelVisible": false
+}

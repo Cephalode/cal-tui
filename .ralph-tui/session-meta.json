@@ -1,0 +1,14 @@
+{
+  "id": "2bcb2199-3d56-4b08-8021-ee466776ac41",
+  "status": "running",
+  "startedAt": "2026-01-28T23:01:13.052Z",
+  "updatedAt": "2026-01-28T23:01:13.052Z",
+  "agentPlugin": "claude",
+  "trackerPlugin": "json",
+  "prdPath": "./prd.json",
+  "currentIteration": 0,
+  "maxIterations": 0,
+  "totalTasks": 0,
+  "tasksCompleted": 0,
+  "cwd": "/Users/sqibo/devel/clawd"
+}
