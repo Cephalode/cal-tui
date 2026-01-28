@@ -3,10 +3,10 @@
   "sessionId": "2bcb2199-3d56-4b08-8021-ee466776ac41",
   "status": "running",
   "startedAt": "2026-01-28T23:01:13.754Z",
-  "updatedAt": "2026-01-28T23:03:05.078Z",
-  "currentIteration": 0,
+  "updatedAt": "2026-01-28T23:18:30.422Z",
+  "currentIteration": 5,
   "maxIterations": 0,
-  "tasksCompleted": 0,
+  "tasksCompleted": 5,
   "isPaused": false,
   "agentPlugin": "claude",
   "trackerState": {
@@ -17,32 +17,32 @@
       {
         "id": "US-001",
         "title": "Initialize Rust project structure with ratatui",
-        "status": "open",
-        "completedInSession": false
+        "status": "completed",
+        "completedInSession": true
       },
       {
         "id": "US-002",
         "title": "Design core data models for calendar and events",
-        "status": "open",
-        "completedInSession": false
+        "status": "completed",
+        "completedInSession": true
       },
       {
         "id": "US-003",
         "title": "Implement in-memory event storage with CRUD operations",
-        "status": "open",
-        "completedInSession": false
+        "status": "completed",
+        "completedInSession": true
       },
       {
         "id": "US-004",
         "title": "Build month calendar view layout",
-        "status": "open",
-        "completedInSession": false
+        "status": "completed",
+        "completedInSession": true
       },
       {
         "id": "US-005",
         "title": "Implement vim-style navigation for month view",
-        "status": "open",
-        "completedInSession": false
+        "status": "completed",
+        "completedInSession": true
       },
       {
         "id": "US-006",
@@ -196,11 +196,62 @@
       }
     ]
   },
-  "iterations": [],
+  "iterations": [
+    {
+      "iteration": 1,
+      "status": "completed",
+      "taskId": "US-001",
+      "taskTitle": "Initialize Rust project structure with ratatui",
+      "taskCompleted": true,
+      "durationMs": 104742,
+      "startedAt": "2026-01-28T23:03:05.063Z",
+      "endedAt": "2026-01-28T23:04:49.805Z"
+    },
+    {
+      "iteration": 2,
+      "status": "completed",
+      "taskId": "US-002",
+      "taskTitle": "Design core data models for calendar and events",
+      "taskCompleted": true,
+      "durationMs": 195896,
+      "startedAt": "2026-01-28T23:04:50.819Z",
+      "endedAt": "2026-01-28T23:08:06.715Z"
+    },
+    {
+      "iteration": 3,
+      "status": "completed",
+      "taskId": "US-003",
+      "taskTitle": "Implement in-memory event storage with CRUD operations",
+      "taskCompleted": true,
+      "durationMs": 139714,
+      "startedAt": "2026-01-28T23:08:07.731Z",
+      "endedAt": "2026-01-28T23:10:27.445Z"
+    },
+    {
+      "iteration": 4,
+      "status": "completed",
+      "taskId": "US-004",
+      "taskTitle": "Build month calendar view layout",
+      "taskCompleted": true,
+      "durationMs": 211740,
+      "startedAt": "2026-01-28T23:10:28.458Z",
+      "endedAt": "2026-01-28T23:14:00.198Z"
+    },
+    {
+      "iteration": 5,
+      "status": "completed",
+      "taskId": "US-005",
+      "taskTitle": "Implement vim-style navigation for month view",
+      "taskCompleted": true,
+      "durationMs": 268169,
+      "startedAt": "2026-01-28T23:14:01.218Z",
+      "endedAt": "2026-01-28T23:18:29.387Z"
+    }
+  ],
   "skippedTaskIds": [],
   "cwd": "/Users/sqibo/devel/clawd",
   "activeTaskIds": [
-    "US-001"
+    "US-006"
   ],
   "subagentPanelVisible": false
 }

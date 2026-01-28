@@ -1,4 +1,4 @@
-use super::{Category, Event};
+use super::Event;
 use chrono::NaiveDateTime;
 use std::collections::HashMap;
 
