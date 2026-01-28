@@ -218,6 +218,63 @@ impl MonthView {
             .checked_add_signed(chrono::Duration::days(days))
             .unwrap_or(self.selected_date);
     }
+
+    pub fn move_to_week_start(&mut self) {
+        let weekday = self.selected_date.weekday().num_days_from_sunday();
+        self.selected_date = self.selected_date
+            .checked_sub_signed(chrono::Duration::days(weekday as i64))
+            .unwrap_or(self.selected_date);
+    }
+
+    pub fn move_to_week_end(&mut self) {
+        let weekday = self.selected_date.weekday().num_days_from_sunday();
+        let days_to_saturday = 6 - weekday;
+        self.selected_date = self.selected_date
+            .checked_add_signed(chrono::Duration::days(days_to_saturday as i64))
+            .unwrap_or(self.selected_date);
+    }
+
+    pub fn move_to_prev_month(&mut self) {
+        let current_day = self.selected_date.day();
+        let month = self.selected_date.month();
+        let year = self.selected_date.year();
+
+        let (prev_month, prev_year) = if month == 1 {
+            (12, year - 1)
+        } else {
+            (month - 1, year)
+        };
+
+        // Get the number of days in the previous month
+        let days_in_prev_month = self.days_in_month(prev_year, prev_month);
+        let target_day = current_day.min(days_in_prev_month as u32);
+
+        self.selected_date = NaiveDate::from_ymd_opt(prev_year, prev_month, target_day)
+            .unwrap_or(self.selected_date);
+    }
+
+    pub fn move_to_next_month(&mut self) {
+        let current_day = self.selected_date.day();
+        let month = self.selected_date.month();
+        let year = self.selected_date.year();
+
+        let (next_month, next_year) = if month == 12 {
+            (1, year + 1)
+        } else {
+            (month + 1, year)
+        };
+
+        // Get the number of days in the next month
+        let days_in_next_month = self.days_in_month(next_year, next_month);
+        let target_day = current_day.min(days_in_next_month as u32);
+
+        self.selected_date = NaiveDate::from_ymd_opt(next_year, next_month, target_day)
+            .unwrap_or(self.selected_date);
+    }
+
+    pub fn jump_to_today(&mut self) {
+        self.selected_date = chrono::Local::now().date_naive();
+    }
 }
 
 impl Default for MonthView {

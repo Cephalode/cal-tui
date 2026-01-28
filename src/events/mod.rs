@@ -148,14 +148,18 @@ impl Event {
 }
 
 mod uuid {
+    use std::sync::atomic::{AtomicU64, Ordering};
     use std::time::{SystemTime, UNIX_EPOCH};
+
+    static COUNTER: AtomicU64 = AtomicU64::new(0);
 
     pub fn generate() -> String {
         let timestamp = SystemTime::now()
             .duration_since(UNIX_EPOCH)
             .unwrap()
             .as_nanos();
-        format!("{:x}", timestamp)
+        let counter = COUNTER.fetch_add(1, Ordering::SeqCst);
+        format!("{:x}{:x}", timestamp, counter)
     }
 }
 
