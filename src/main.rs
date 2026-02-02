@@ -3,6 +3,7 @@ mod events;
 mod views;
 mod ui;
 mod csv;
+mod persistence;
 
 use std::io;
 use ui::App;

@@ -174,8 +174,8 @@ impl CalendarState {
             .and_then(|index| self.events.get(index))
     }
 
-    /// Sort events by start time
-    fn sort_events(&mut self) {
+    /// Sort events by start time (public for use by persistence module)
+    pub fn sort_events(&mut self) {
         self.events.sort_by(|a, b| a.start_time.cmp(&b.start_time));
     }
 

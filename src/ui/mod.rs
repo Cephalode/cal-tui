@@ -18,6 +18,7 @@ use std::io;
 use crate::calendar::CalendarState;
 use crate::views::{MonthView, WeekView, DayView, YearView};
 use crate::events::{Event as CalendarEvent, Category};
+use crate::persistence;
 use event_modal::{EventModal, ModalAction};
 use help_view::HelpView;
 use status_bar::StatusBar;
@@ -48,7 +49,7 @@ pub struct App {
 
 impl App {
     pub fn new() -> Self {
-        Self {
+        let mut app = Self {
             should_quit: false,
             state: CalendarState::new(),
             month_view: MonthView::new(),
@@ -62,7 +63,12 @@ impl App {
             event_modal: EventModal::new(),
             error_message: None,
             event_to_delete: None,
-        }
+        };
+
+        // Load events from file on startup
+        let _ = persistence::load_events(&mut app.state);
+
+        app
     }
 
     pub fn run(&mut self) -> io::Result<()> {
@@ -665,6 +671,10 @@ impl App {
 
                     self.state.add_event(event);
                 }
+
+                // Save to file
+                let _ = persistence::save_events(&self.state);
+
                 self.event_modal.close();
                 self.input_mode = InputMode::Normal;
                 self.error_message = None;
