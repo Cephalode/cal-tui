@@ -170,7 +170,7 @@ impl EventStore for InMemoryEventStore {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::events::{Category, Event, Reminder};
+    use crate::events::{Category, Event};
     use chrono::NaiveDate;
 
     fn create_test_event(title: &str, day: u32, hour: u32) -> Event {

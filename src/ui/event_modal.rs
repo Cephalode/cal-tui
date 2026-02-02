@@ -37,6 +37,9 @@ pub struct EventModal {
     // Vim editing state
     pub cursor_pos: usize,
     pub command_buffer: String,
+
+    // Edit mode tracking
+    pub editing_event_id: Option<String>,
 }
 
 impl EventModal {
@@ -53,6 +56,7 @@ impl EventModal {
             description: String::new(),
             cursor_pos: 0,
             command_buffer: String::new(),
+            editing_event_id: None,
         }
     }
 
@@ -64,6 +68,26 @@ impl EventModal {
         self.time_input = String::from("09:00");
         self.cursor_pos = 0;
         self.command_buffer.clear();
+        self.editing_event_id = None;
+    }
+
+    pub fn open_for_edit(&mut self, event: &crate::events::Event) {
+        self.active = true;
+        self.focused_field = ModalField::Title;
+        self.vim_mode = VimMode::Insert;
+        self.title = event.title.clone();
+        self.date_input = event.start_time.format("%Y-%m-%d").to_string();
+        self.time_input = event.start_time.format("%H:%M").to_string();
+        self.duration_input = event.duration_minutes().to_string();
+        self.category_input = event.category.as_ref().map(|c| c.name.clone()).unwrap_or_default();
+        self.description = event.description.clone().unwrap_or_default();
+        self.cursor_pos = 0;
+        self.command_buffer.clear();
+        self.editing_event_id = Some(event.id.clone());
+    }
+
+    pub fn is_editing(&self) -> bool {
+        self.editing_event_id.is_some()
     }
 
     pub fn close(&mut self) {
@@ -80,6 +104,7 @@ impl EventModal {
         self.description.clear();
         self.cursor_pos = 0;
         self.command_buffer.clear();
+        self.editing_event_id = None;
     }
 
     pub fn current_field_content(&self) -> &str {

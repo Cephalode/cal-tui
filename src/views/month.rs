@@ -10,12 +10,14 @@ use crate::calendar::CalendarState;
 
 pub struct MonthView {
     pub selected_date: NaiveDate,
+    pub selected_event_index: Option<usize>,
 }
 
 impl MonthView {
     pub fn new() -> Self {
         Self {
             selected_date: chrono::Local::now().date_naive(),
+            selected_event_index: None,
         }
     }
 
@@ -144,10 +146,17 @@ impl MonthView {
         } else {
             let items: Vec<ListItem> = events
                 .iter()
-                .map(|event| {
+                .enumerate()
+                .map(|(idx, event)| {
                     let time = event.start_time.format("%H:%M").to_string();
                     let content = format!("{} - {}", time, event.title);
-                    ListItem::new(content)
+                    let mut item = ListItem::new(content);
+
+                    // Highlight selected event
+                    if Some(idx) == self.selected_event_index {
+                        item = item.style(Style::default().bg(Color::DarkGray).fg(Color::White));
+                    }
+                    item
                 })
                 .collect();
 
@@ -274,6 +283,43 @@ impl MonthView {
 
     pub fn jump_to_today(&mut self) {
         self.selected_date = chrono::Local::now().date_naive();
+    }
+
+    pub fn select_next_event(&mut self, event_count: usize) {
+        if event_count == 0 {
+            self.selected_event_index = None;
+            return;
+        }
+
+        self.selected_event_index = Some(match self.selected_event_index {
+            Some(idx) if idx + 1 < event_count => idx + 1,
+            Some(_) => 0,
+            None => 0,
+        });
+    }
+
+    pub fn select_prev_event(&mut self, event_count: usize) {
+        if event_count == 0 {
+            self.selected_event_index = None;
+            return;
+        }
+
+        self.selected_event_index = Some(match self.selected_event_index {
+            Some(0) => event_count - 1,
+            Some(idx) => idx - 1,
+            None => event_count - 1,
+        });
+    }
+
+    pub fn get_selected_event_id(&self, state: &CalendarState) -> Option<String> {
+        let events = state.events_on_date(self.selected_date);
+        self.selected_event_index
+            .and_then(|idx| events.get(idx))
+            .map(|event| event.id.clone())
+    }
+
+    pub fn clear_event_selection(&mut self) {
+        self.selected_event_index = None;
     }
 }
 

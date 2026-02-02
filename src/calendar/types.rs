@@ -17,34 +17,6 @@ impl Default for ViewMode {
     }
 }
 
-/// Represents a calendar view
-#[derive(Debug, Clone)]
-pub struct Calendar {
-    pub current_date: NaiveDate,
-}
-
-impl Calendar {
-    pub fn new() -> Self {
-        Self {
-            current_date: chrono::Local::now().date_naive(),
-        }
-    }
-
-    pub fn month(&self) -> u32 {
-        self.current_date.month()
-    }
-
-    pub fn year(&self) -> i32 {
-        self.current_date.year()
-    }
-}
-
-impl Default for Calendar {
-    fn default() -> Self {
-        Self::new()
-    }
-}
-
 /// Main state management for the calendar application
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct CalendarState {
@@ -222,7 +194,6 @@ impl Default for CalendarState {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::events::{Event, Category, Reminder, RecurringRules, RecurrenceFrequency};
 
     fn create_test_event(title: &str, day: u32, hour: u32) -> Event {
         let start = NaiveDate::from_ymd_opt(2024, 1, day)

@@ -24,8 +24,8 @@
       ],
       "priority": "P0",
       "dependencies": [],
-      "passes": false,
-      "passed": false
+      "passes": true,
+      "passed": true
     },
     {
       "id": "US-002",
@@ -42,8 +42,8 @@
       "dependencies": [
         "US-001"
       ],
-      "passes": false,
-      "passed": false
+      "passes": true,
+      "passed": true
     },
     {
       "id": "US-003",
@@ -63,8 +63,8 @@
       "dependencies": [
         "US-002"
       ],
-      "passes": false,
-      "passed": false
+      "passes": true,
+      "passed": true
     },
     {
       "id": "US-004",
@@ -82,8 +82,8 @@
       "dependencies": [
         "US-003"
       ],
-      "passes": false,
-      "passed": false
+      "passes": true,
+      "passed": true
     },
     {
       "id": "US-005",
@@ -103,8 +103,8 @@
       "dependencies": [
         "US-004"
       ],
-      "passes": false,
-      "passed": false
+      "passes": true,
+      "passed": true
     },
     {
       "id": "US-006",
@@ -125,8 +125,8 @@
       "dependencies": [
         "US-004"
       ],
-      "passes": false,
-      "passed": false
+      "passes": true,
+      "passed": true
     },
     {
       "id": "US-007",
@@ -145,8 +145,8 @@
       "dependencies": [
         "US-006"
       ],
-      "passes": false,
-      "passed": false
+      "passes": true,
+      "passed": true
     },
     {
       "id": "US-008",
@@ -520,8 +520,8 @@
       "dependencies": [
         "US-004"
       ],
-      "passes": false,
-      "passed": false
+      "passes": true,
+      "passed": true
     },
     {
       "id": "US-026",

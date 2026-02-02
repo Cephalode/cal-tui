@@ -1,5 +1,6 @@
 /// UI components module
 mod event_modal;
+mod help_view;
 
 use crossterm::{
     event::{self, Event, KeyCode, KeyModifiers},
@@ -15,22 +16,26 @@ use crate::calendar::CalendarState;
 use crate::views::MonthView;
 use crate::events::{Event as CalendarEvent, Category};
 use event_modal::{EventModal, ModalAction};
+use help_view::HelpView;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum InputMode {
     Normal,
     DatePrompt,
     EventModal,
+    DeleteConfirmation,
 }
 
 pub struct App {
     pub should_quit: bool,
     pub state: CalendarState,
     pub month_view: MonthView,
+    pub help_view: HelpView,
     pub input_mode: InputMode,
     pub input_buffer: String,
     pub event_modal: EventModal,
     pub error_message: Option<String>,
+    pub event_to_delete: Option<String>,
 }
 
 impl App {
@@ -39,10 +44,12 @@ impl App {
             should_quit: false,
             state: CalendarState::new(),
             month_view: MonthView::new(),
+            help_view: HelpView::new(),
             input_mode: InputMode::Normal,
             input_buffer: String::new(),
             event_modal: EventModal::new(),
             error_message: None,
+            event_to_delete: None,
         }
     }
 
@@ -83,6 +90,15 @@ impl App {
 
         let area = frame.area();
 
+        // Render help view if active (on top of everything)
+        if self.help_view.active {
+            // Render the calendar in the background
+            self.month_view.render(frame, area, &self.state);
+            // Then render help overlay
+            self.help_view.render(frame, area);
+            return;
+        }
+
         // If in date prompt mode, show a prompt at the bottom
         if self.input_mode == InputMode::DatePrompt {
             let chunks = Layout::default()
@@ -106,6 +122,11 @@ impl App {
         // Render modal if active
         if self.input_mode == InputMode::EventModal && self.event_modal.active {
             self.render_event_modal(frame, area);
+        }
+
+        // Render delete confirmation dialog
+        if self.input_mode == InputMode::DeleteConfirmation {
+            self.render_delete_confirmation(frame, area);
         }
     }
 
@@ -137,7 +158,8 @@ impl App {
             event_modal::VimMode::Command => "COMMAND",
         };
 
-        let title = format!(" Create Event - {} ", mode_indicator);
+        let action = if self.event_modal.is_editing() { "Edit" } else { "Create" };
+        let title = format!(" {} Event - {} ", action, mode_indicator);
         let block = Block::default()
             .title(title)
             .borders(Borders::ALL)
@@ -228,18 +250,72 @@ impl App {
         frame.render_widget(paragraph, inner);
     }
 
+    fn render_delete_confirmation(&self, frame: &mut ratatui::Frame, area: ratatui::layout::Rect) {
+        use ratatui::{
+            layout::Rect,
+            widgets::{Block, Borders, Paragraph, Clear},
+            style::{Color, Style},
+        };
+
+        // Create centered modal area
+        let modal_width = 50.min(area.width.saturating_sub(4));
+        let modal_height = 7.min(area.height.saturating_sub(4));
+
+        let modal_area = Rect {
+            x: (area.width.saturating_sub(modal_width)) / 2,
+            y: (area.height.saturating_sub(modal_height)) / 2,
+            width: modal_width,
+            height: modal_height,
+        };
+
+        // Clear the area behind the modal
+        frame.render_widget(Clear, modal_area);
+
+        let block = Block::default()
+            .title(" Delete Event ")
+            .borders(Borders::ALL)
+            .border_style(Style::default().fg(Color::Red));
+
+        let inner = block.inner(modal_area);
+        frame.render_widget(block, modal_area);
+
+        let text = "Are you sure you want to delete this event?\n\nPress 'y' to confirm, 'n' or Esc to cancel";
+        let paragraph = Paragraph::new(text)
+            .style(Style::default().fg(Color::White));
+
+        frame.render_widget(paragraph, inner);
+    }
+
     fn handle_key(&mut self, key: KeyCode, modifiers: KeyModifiers) {
         match self.input_mode {
             InputMode::Normal => self.handle_normal_mode(key),
             InputMode::DatePrompt => self.handle_date_prompt_mode(key),
             InputMode::EventModal => self.handle_event_modal_mode(key, modifiers),
+            InputMode::DeleteConfirmation => self.handle_delete_confirmation_mode(key),
         }
     }
 
     fn handle_normal_mode(&mut self, key: KeyCode) {
         match key {
-            KeyCode::Char('q') => self.should_quit = true,
-            KeyCode::Esc => self.should_quit = true,
+            // Toggle help view
+            KeyCode::Char('?') => {
+                self.help_view.toggle();
+            },
+            // Quit (unless help is active, then just close help)
+            KeyCode::Char('q') => {
+                if self.help_view.active {
+                    self.help_view.toggle();
+                } else {
+                    self.should_quit = true;
+                }
+            },
+            KeyCode::Esc => {
+                if self.help_view.active {
+                    self.help_view.toggle();
+                } else {
+                    self.should_quit = true;
+                }
+            },
             KeyCode::Left => self.month_view.move_selection(-1),
             KeyCode::Right => self.month_view.move_selection(1),
             KeyCode::Up => self.month_view.move_selection(-7),
@@ -281,6 +357,32 @@ impl App {
                 self.event_modal.open(self.month_view.selected_date);
                 self.input_mode = InputMode::EventModal;
                 self.error_message = None;
+            },
+            // Edit selected event
+            KeyCode::Char('E') | KeyCode::Enter => {
+                if let Some(event_id) = self.month_view.get_selected_event_id(&self.state) {
+                    if let Some(event) = self.state.get_event(&event_id) {
+                        self.event_modal.open_for_edit(event);
+                        self.input_mode = InputMode::EventModal;
+                        self.error_message = None;
+                    }
+                }
+            },
+            // Delete selected event
+            KeyCode::Char('d') => {
+                if let Some(event_id) = self.month_view.get_selected_event_id(&self.state) {
+                    self.event_to_delete = Some(event_id);
+                    self.input_mode = InputMode::DeleteConfirmation;
+                }
+            },
+            // Navigate between events in side panel
+            KeyCode::Tab => {
+                let event_count = self.state.events_on_date(self.month_view.selected_date).len();
+                self.month_view.select_next_event(event_count);
+            },
+            KeyCode::BackTab => {
+                let event_count = self.state.events_on_date(self.month_view.selected_date).len();
+                self.month_view.select_prev_event(event_count);
             },
             _ => {}
         }
@@ -336,28 +438,57 @@ impl App {
         }
     }
 
+    fn handle_delete_confirmation_mode(&mut self, key: KeyCode) {
+        match key {
+            KeyCode::Char('y') | KeyCode::Char('Y') => {
+                if let Some(event_id) = self.event_to_delete.take() {
+                    self.state.remove_event(&event_id);
+                    self.month_view.clear_event_selection();
+                }
+                self.input_mode = InputMode::Normal;
+            }
+            KeyCode::Char('n') | KeyCode::Char('N') | KeyCode::Esc => {
+                self.event_to_delete = None;
+                self.input_mode = InputMode::Normal;
+            }
+            _ => {}
+        }
+    }
+
     fn save_event(&mut self) {
         match self.event_modal.validate_and_create_event() {
             Ok(event_data) => {
-                let event = CalendarEvent::new(
-                    event_data.title,
-                    event_data.start_time,
-                    event_data.end_time,
-                );
-
-                let event = if let Some(category_name) = event_data.category {
-                    event.with_category(Category::new(category_name))
+                if let Some(event_id) = &self.event_modal.editing_event_id {
+                    // Update existing event
+                    if let Some(event) = self.state.get_event_mut(event_id) {
+                        event.title = event_data.title;
+                        event.start_time = event_data.start_time;
+                        event.end_time = event_data.end_time;
+                        event.category = event_data.category.map(|name| Category::new(name));
+                        event.description = event_data.description;
+                    }
                 } else {
-                    event
-                };
+                    // Create new event
+                    let event = CalendarEvent::new(
+                        event_data.title,
+                        event_data.start_time,
+                        event_data.end_time,
+                    );
 
-                let event = if let Some(description) = event_data.description {
-                    event.with_description(description)
-                } else {
-                    event
-                };
+                    let event = if let Some(category_name) = event_data.category {
+                        event.with_category(Category::new(category_name))
+                    } else {
+                        event
+                    };
 
-                self.state.add_event(event);
+                    let event = if let Some(description) = event_data.description {
+                        event.with_description(description)
+                    } else {
+                        event
+                    };
+
+                    self.state.add_event(event);
+                }
                 self.event_modal.close();
                 self.input_mode = InputMode::Normal;
                 self.error_message = None;
