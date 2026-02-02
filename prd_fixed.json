@@ -184,8 +184,8 @@
       "dependencies": [
         "US-003"
       ],
-      "passes": false,
-      "passed": false
+      "passes": true,
+      "passed": true
     },
     {
       "id": "US-010",

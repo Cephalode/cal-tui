@@ -12,10 +12,11 @@ use crossterm::{
 use ratatui::{
     backend::CrosstermBackend,
     Terminal,
+    layout::Rect,
 };
 use std::io;
 use crate::calendar::CalendarState;
-use crate::views::{MonthView, WeekView};
+use crate::views::{MonthView, WeekView, DayView};
 use crate::events::{Event as CalendarEvent, Category};
 use event_modal::{EventModal, ModalAction};
 use help_view::HelpView;
@@ -34,6 +35,7 @@ pub struct App {
     pub state: CalendarState,
     pub month_view: MonthView,
     pub week_view: WeekView,
+    pub day_view: DayView,
     pub help_view: HelpView,
     pub status_bar: StatusBar,
     pub input_mode: InputMode,
@@ -50,6 +52,7 @@ impl App {
             state: CalendarState::new(),
             month_view: MonthView::new(),
             week_view: WeekView::new(),
+            day_view: DayView::new(),
             help_view: HelpView::new(),
             status_bar: StatusBar::new(),
             input_mode: InputMode::Normal,
@@ -111,33 +114,61 @@ impl App {
 
         // Render help view if active (on top of everything)
         if self.help_view.active {
-            // Render the calendar in the background
-            self.month_view.render(frame, main_area, &self.state);
+            // Render the appropriate view in the background
+            match self.state.view_mode {
+                crate::calendar::ViewMode::Month => self.month_view.render(frame, main_area, &self.state),
+                crate::calendar::ViewMode::Week => self.week_view.render(frame, main_area, &self.state),
+                crate::calendar::ViewMode::Day => self.day_view.render(frame, main_area, &self.state),
+                crate::calendar::ViewMode::Year => self.month_view.render(frame, main_area, &self.state),
+            }
             // Then render help overlay (full screen)
             self.help_view.render(frame, area);
             // Render status bar at bottom
-            self.status_bar.render(frame, status_area, self.input_mode, self.state.view_mode, self.month_view.selected_date, self.state.events.len());
+            let current_date = match self.state.view_mode {
+                crate::calendar::ViewMode::Month => self.month_view.selected_date,
+                crate::calendar::ViewMode::Week => self.week_view.selected_date,
+                crate::calendar::ViewMode::Day => self.day_view.selected_date,
+                crate::calendar::ViewMode::Year => self.state.current_date,
+            };
+            self.status_bar.render(frame, status_area, self.input_mode, self.state.view_mode, current_date, self.state.events.len());
             return;
         }
 
-        // If in date prompt mode, show a prompt above the status bar
-        if self.input_mode == InputMode::DatePrompt {
-            let date_chunks = Layout::default()
-                .direction(Direction::Vertical)
-                .constraints([
-                    Constraint::Min(0),
-                    Constraint::Length(3),
-                ])
-                .split(main_area);
+        // Render the appropriate view based on view mode
+        let current_date = match self.state.view_mode {
+            crate::calendar::ViewMode::Month => {
+                self.month_view.render(frame, main_area, &self.state);
+                self.month_view.selected_date
+            },
+            crate::calendar::ViewMode::Week => {
+                self.week_view.render(frame, main_area, &self.state);
+                self.week_view.selected_date
+            },
+            crate::calendar::ViewMode::Day => {
+                self.day_view.render(frame, main_area, &self.state);
+                self.day_view.selected_date
+            },
+            crate::calendar::ViewMode::Year => {
+                self.month_view.render(frame, main_area, &self.state);
+                self.state.current_date
+            },
+        };
 
-            self.month_view.render(frame, date_chunks[0], &self.state);
+        // If in date prompt mode, show a prompt above the view
+        if self.input_mode == InputMode::DatePrompt {
+            let prompt_area = Rect {
+                x: main_area.x + main_area.width / 4,
+                y: main_area.y + main_area.height / 2,
+                width: main_area.width / 2,
+                height: 3,
+            };
 
             let prompt_text = format!("Go to date (YYYY-MM-DD): {}", self.input_buffer);
             let prompt = Paragraph::new(prompt_text)
                 .block(Block::default().borders(Borders::ALL).title(" Jump to Date "));
-            frame.render_widget(prompt, date_chunks[1]);
-        } else {
-            self.month_view.render(frame, main_area, &self.state);
+
+            frame.render_widget(ratatui::widgets::Clear, prompt_area);
+            frame.render_widget(prompt, prompt_area);
         }
 
         // Render modal if active (overlays on main area)
