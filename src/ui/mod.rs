@@ -2,6 +2,7 @@
 mod event_modal;
 mod help_view;
 mod status_bar;
+pub mod category_colors;
 
 use crossterm::{
     event::{self, Event, KeyCode, KeyModifiers},

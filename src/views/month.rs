@@ -7,6 +7,7 @@ use ratatui::{
     Frame,
 };
 use crate::calendar::CalendarState;
+use crate::ui::category_colors;
 
 pub struct MonthView {
     pub selected_date: NaiveDate,
@@ -101,7 +102,9 @@ impl MonthView {
             if let Some(day) = day_option {
                 let is_today = *day == today;
                 let is_selected = *day == self.selected_date;
-                let has_events = !state.events_on_date(*day).is_empty();
+
+                let events = state.events_on_date(*day);
+                let has_events = !events.is_empty();
 
                 let mut style = Style::default();
                 if is_today {
@@ -112,11 +115,22 @@ impl MonthView {
                 }
 
                 let day_str = format!("{:2}", day.day());
+
+                // Get indicator color from first event's category
+                let indicator_color = if has_events {
+                    events[0].category
+                        .as_ref()
+                        .map(|c| category_colors::category_color(&c.name))
+                        .unwrap_or(Color::Green)
+                } else {
+                    Color::Green
+                };
+
                 let indicator = if has_events { "*" } else { " " };
 
                 let lines = vec![
                     Line::from(Span::styled(day_str, style)),
-                    Line::from(Span::styled(indicator, Style::default().fg(Color::Green))),
+                    Line::from(Span::styled(indicator, Style::default().fg(indicator_color))),
                 ];
 
                 let paragraph = Paragraph::new(lines);
@@ -149,12 +163,31 @@ impl MonthView {
                 .enumerate()
                 .map(|(idx, event)| {
                     let time = event.start_time.format("%H:%M").to_string();
-                    let content = format!("{} - {}", time, event.title);
+
+                    // Get category color
+                    let cat_color = event.category
+                        .as_ref()
+                        .map(|c| category_colors::category_color(&c.name))
+                        .unwrap_or(Color::Gray);
+
+                    // Create styled content with category color
+                    let content = Line::from(vec![
+                        Span::styled(
+                            format!("{} ", time),
+                            Style::default().fg(Color::DarkGray),
+                        ),
+                        Span::styled("● ", Style::default().fg(cat_color)),
+                        Span::styled(
+                            &event.title,
+                            Style::default().fg(Color::White),
+                        ),
+                    ]);
+
                     let mut item = ListItem::new(content);
 
                     // Highlight selected event
                     if Some(idx) == self.selected_event_index {
-                        item = item.style(Style::default().bg(Color::DarkGray).fg(Color::White));
+                        item = item.style(Style::default().bg(Color::DarkGray));
                     }
                     item
                 })
