@@ -2,6 +2,7 @@ mod calendar;
 mod events;
 mod views;
 mod ui;
+mod csv;
 
 use std::io;
 use ui::App;
