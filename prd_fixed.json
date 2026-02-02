@@ -203,8 +203,8 @@
       "dependencies": [
         "US-003"
       ],
-      "passes": false,
-      "passed": false
+      "passes": true,
+      "passed": true
     },
     {
       "id": "US-011",
@@ -225,8 +225,8 @@
         "US-009",
         "US-010"
       ],
-      "passes": false,
-      "passed": false
+      "passes": true,
+      "passed": true
     },
     {
       "id": "US-012",

@@ -16,7 +16,7 @@ use ratatui::{
 };
 use std::io;
 use crate::calendar::CalendarState;
-use crate::views::{MonthView, WeekView, DayView};
+use crate::views::{MonthView, WeekView, DayView, YearView};
 use crate::events::{Event as CalendarEvent, Category};
 use event_modal::{EventModal, ModalAction};
 use help_view::HelpView;
@@ -36,6 +36,7 @@ pub struct App {
     pub month_view: MonthView,
     pub week_view: WeekView,
     pub day_view: DayView,
+    pub year_view: YearView,
     pub help_view: HelpView,
     pub status_bar: StatusBar,
     pub input_mode: InputMode,
@@ -53,6 +54,7 @@ impl App {
             month_view: MonthView::new(),
             week_view: WeekView::new(),
             day_view: DayView::new(),
+            year_view: YearView::new(),
             help_view: HelpView::new(),
             status_bar: StatusBar::new(),
             input_mode: InputMode::Normal,
@@ -119,7 +121,7 @@ impl App {
                 crate::calendar::ViewMode::Month => self.month_view.render(frame, main_area, &self.state),
                 crate::calendar::ViewMode::Week => self.week_view.render(frame, main_area, &self.state),
                 crate::calendar::ViewMode::Day => self.day_view.render(frame, main_area, &self.state),
-                crate::calendar::ViewMode::Year => self.month_view.render(frame, main_area, &self.state),
+                crate::calendar::ViewMode::Year => self.year_view.render(frame, main_area, &self.state),
             }
             // Then render help overlay (full screen)
             self.help_view.render(frame, area);
@@ -128,7 +130,7 @@ impl App {
                 crate::calendar::ViewMode::Month => self.month_view.selected_date,
                 crate::calendar::ViewMode::Week => self.week_view.selected_date,
                 crate::calendar::ViewMode::Day => self.day_view.selected_date,
-                crate::calendar::ViewMode::Year => self.state.current_date,
+                crate::calendar::ViewMode::Year => self.year_view.selected_date,
             };
             self.status_bar.render(frame, status_area, self.input_mode, self.state.view_mode, current_date, self.state.events.len());
             return;
@@ -149,8 +151,8 @@ impl App {
                 self.day_view.selected_date
             },
             crate::calendar::ViewMode::Year => {
-                self.month_view.render(frame, main_area, &self.state);
-                self.state.current_date
+                self.year_view.render(frame, main_area, &self.state);
+                self.year_view.selected_date
             },
         };
 
@@ -356,6 +358,19 @@ impl App {
             KeyCode::Char('?') => {
                 self.help_view.toggle();
             },
+            // View switching
+            KeyCode::Char('m') => {
+                self.state.set_view_mode(crate::calendar::ViewMode::Month);
+            },
+            KeyCode::Char('w') => {
+                self.state.set_view_mode(crate::calendar::ViewMode::Week);
+            },
+            KeyCode::Char('d') => {
+                self.state.set_view_mode(crate::calendar::ViewMode::Day);
+            },
+            KeyCode::Char('y') => {
+                self.state.set_view_mode(crate::calendar::ViewMode::Year);
+            },
             // Quit (unless help is active, then just close help)
             KeyCode::Char('q') => {
                 if self.help_view.active {
@@ -371,51 +386,129 @@ impl App {
                     self.should_quit = true;
                 }
             },
-            KeyCode::Left => self.month_view.move_selection(-1),
-            KeyCode::Right => self.month_view.move_selection(1),
-            KeyCode::Up => self.month_view.move_selection(-7),
-            KeyCode::Down => self.month_view.move_selection(7),
-            // Vim-style navigation
-            KeyCode::Char('h') => self.month_view.move_selection(-1),
-            KeyCode::Char('l') => self.month_view.move_selection(1),
-            KeyCode::Char('k') => self.month_view.move_selection(-7),
-            KeyCode::Char('j') => self.month_view.move_selection(7),
-            // Week navigation
-            KeyCode::Char('w') => self.month_view.move_to_week_start(),
-            KeyCode::Char('e') => self.month_view.move_to_week_end(),
-            // Month navigation
+            // Navigation - use appropriate view based on current mode
+            KeyCode::Left | KeyCode::Char('h') => {
+                match self.state.view_mode {
+                    crate::calendar::ViewMode::Month => self.month_view.move_selection(-1),
+                    crate::calendar::ViewMode::Week => self.week_view.move_selection(-1),
+                    crate::calendar::ViewMode::Day => self.day_view.move_selection(-1),
+                    crate::calendar::ViewMode::Year => self.year_view.move_selection(-1),
+                }
+            },
+            KeyCode::Right | KeyCode::Char('l') => {
+                match self.state.view_mode {
+                    crate::calendar::ViewMode::Month => self.month_view.move_selection(1),
+                    crate::calendar::ViewMode::Week => self.week_view.move_selection(1),
+                    crate::calendar::ViewMode::Day => self.day_view.move_selection(1),
+                    crate::calendar::ViewMode::Year => self.year_view.move_selection(1),
+                }
+            },
+            KeyCode::Up | KeyCode::Char('k') => {
+                match self.state.view_mode {
+                    crate::calendar::ViewMode::Month => self.month_view.move_selection(-7),
+                    crate::calendar::ViewMode::Week => self.week_view.move_selection(-7),
+                    crate::calendar::ViewMode::Day => self.day_view.move_selection(-1),
+                    crate::calendar::ViewMode::Year => self.year_view.move_selection(-3),
+                }
+            },
+            KeyCode::Down | KeyCode::Char('j') => {
+                match self.state.view_mode {
+                    crate::calendar::ViewMode::Month => self.month_view.move_selection(7),
+                    crate::calendar::ViewMode::Week => self.week_view.move_selection(7),
+                    crate::calendar::ViewMode::Day => self.day_view.move_selection(1),
+                    crate::calendar::ViewMode::Year => self.year_view.move_selection(3),
+                }
+            },
+            // Period navigation (month-specific)
             KeyCode::Char('b') => {
-                self.month_view.move_to_prev_month();
-                self.state.previous_period();
+                match self.state.view_mode {
+                    crate::calendar::ViewMode::Month => {
+                        self.month_view.move_to_prev_month();
+                        self.state.previous_period();
+                    },
+                    crate::calendar::ViewMode::Week => {
+                        self.week_view.move_to_prev_week();
+                        self.state.previous_period();
+                    },
+                    crate::calendar::ViewMode::Day => {
+                        self.day_view.move_to_prev_day();
+                        self.state.previous_period();
+                    },
+                    crate::calendar::ViewMode::Year => {
+                        self.year_view.move_to_prev_year();
+                        self.state.previous_period();
+                    },
+                }
             },
             KeyCode::Char('f') => {
-                self.month_view.move_to_next_month();
-                self.state.next_period();
+                match self.state.view_mode {
+                    crate::calendar::ViewMode::Month => {
+                        self.month_view.move_to_next_month();
+                        self.state.next_period();
+                    },
+                    crate::calendar::ViewMode::Week => {
+                        self.week_view.move_to_next_week();
+                        self.state.next_period();
+                    },
+                    crate::calendar::ViewMode::Day => {
+                        self.day_view.move_to_next_day();
+                        self.state.next_period();
+                    },
+                    crate::calendar::ViewMode::Year => {
+                        self.year_view.move_to_next_year();
+                        self.state.next_period();
+                    },
+                }
             },
             KeyCode::Char('n') => self.state.next_period(),
             KeyCode::Char('p') => self.state.previous_period(),
             // Jump commands
-            KeyCode::Char('g') => {
-                self.input_mode = InputMode::DatePrompt;
-                self.input_buffer.clear();
-            },
             KeyCode::Char('G') => {
-                self.month_view.jump_to_today();
+                match self.state.view_mode {
+                    crate::calendar::ViewMode::Month => self.month_view.jump_to_today(),
+                    crate::calendar::ViewMode::Week => self.week_view.jump_to_today(),
+                    crate::calendar::ViewMode::Day => self.day_view.jump_to_today(),
+                    crate::calendar::ViewMode::Year => self.year_view.jump_to_today(),
+                }
                 self.state.go_to_today();
             },
             KeyCode::Char('t') => {
                 self.state.go_to_today();
-                self.month_view.select_date(self.state.current_date);
+                match self.state.view_mode {
+                    crate::calendar::ViewMode::Month => self.month_view.select_date(self.state.current_date),
+                    crate::calendar::ViewMode::Week => self.week_view.select_date(self.state.current_date),
+                    crate::calendar::ViewMode::Day => self.day_view.select_date(self.state.current_date),
+                    crate::calendar::ViewMode::Year => self.year_view.jump_to_today(),
+                }
+            },
+            // Date prompt (only in non-year views)
+            KeyCode::Char('g') => {
+                if self.state.view_mode != crate::calendar::ViewMode::Year {
+                    self.input_mode = InputMode::DatePrompt;
+                    self.input_buffer.clear();
+                }
             },
             // Open event creation modal
             KeyCode::Char('o') => {
-                self.event_modal.open(self.month_view.selected_date);
+                let date = match self.state.view_mode {
+                    crate::calendar::ViewMode::Month => self.month_view.selected_date,
+                    crate::calendar::ViewMode::Week => self.week_view.selected_date,
+                    crate::calendar::ViewMode::Day => self.day_view.selected_date,
+                    crate::calendar::ViewMode::Year => self.year_view.selected_date,
+                };
+                self.event_modal.open(date);
                 self.input_mode = InputMode::EventModal;
                 self.error_message = None;
             },
             // Edit selected event
             KeyCode::Char('E') | KeyCode::Enter => {
-                if let Some(event_id) = self.month_view.get_selected_event_id(&self.state) {
+                let event_id = match self.state.view_mode {
+                    crate::calendar::ViewMode::Month => self.month_view.get_selected_event_id(&self.state),
+                    crate::calendar::ViewMode::Week => None, // TODO: implement for week view
+                    crate::calendar::ViewMode::Day => None, // TODO: implement for day view
+                    crate::calendar::ViewMode::Year => None,
+                };
+                if let Some(event_id) = event_id {
                     if let Some(event) = self.state.get_event(&event_id) {
                         self.event_modal.open_for_edit(event);
                         self.input_mode = InputMode::EventModal;
@@ -425,19 +518,47 @@ impl App {
             },
             // Delete selected event
             KeyCode::Char('d') => {
-                if let Some(event_id) = self.month_view.get_selected_event_id(&self.state) {
+                let event_id = match self.state.view_mode {
+                    crate::calendar::ViewMode::Month => self.month_view.get_selected_event_id(&self.state),
+                    crate::calendar::ViewMode::Week => None,
+                    crate::calendar::ViewMode::Day => None,
+                    crate::calendar::ViewMode::Year => None,
+                };
+                if let Some(event_id) = event_id {
                     self.event_to_delete = Some(event_id);
                     self.input_mode = InputMode::DeleteConfirmation;
                 }
             },
             // Navigate between events in side panel
             KeyCode::Tab => {
-                let event_count = self.state.events_on_date(self.month_view.selected_date).len();
-                self.month_view.select_next_event(event_count);
+                let date = match self.state.view_mode {
+                    crate::calendar::ViewMode::Month => self.month_view.selected_date,
+                    crate::calendar::ViewMode::Week => self.week_view.selected_date,
+                    crate::calendar::ViewMode::Day => self.day_view.selected_date,
+                    crate::calendar::ViewMode::Year => self.year_view.selected_date,
+                };
+                let event_count = self.state.events_on_date(date).len();
+                match self.state.view_mode {
+                    crate::calendar::ViewMode::Month => self.month_view.select_next_event(event_count),
+                    crate::calendar::ViewMode::Week => self.week_view.select_next_event(event_count),
+                    crate::calendar::ViewMode::Day => self.day_view.select_next_event(event_count),
+                    crate::calendar::ViewMode::Year => {}
+                }
             },
             KeyCode::BackTab => {
-                let event_count = self.state.events_on_date(self.month_view.selected_date).len();
-                self.month_view.select_prev_event(event_count);
+                let date = match self.state.view_mode {
+                    crate::calendar::ViewMode::Month => self.month_view.selected_date,
+                    crate::calendar::ViewMode::Week => self.week_view.selected_date,
+                    crate::calendar::ViewMode::Day => self.day_view.selected_date,
+                    crate::calendar::ViewMode::Year => self.year_view.selected_date,
+                };
+                let event_count = self.state.events_on_date(date).len();
+                match self.state.view_mode {
+                    crate::calendar::ViewMode::Month => self.month_view.select_prev_event(event_count),
+                    crate::calendar::ViewMode::Week => self.week_view.select_prev_event(event_count),
+                    crate::calendar::ViewMode::Day => self.day_view.select_prev_event(event_count),
+                    crate::calendar::ViewMode::Year => {}
+                }
             },
             _ => {}
         }
