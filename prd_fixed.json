@@ -151,7 +151,7 @@
     {
       "id": "US-008",
       "title": "Build week view layout",
-      "description": "Implement a week view showing 7 days with time-based slots for each day. Display events as blocks in their time slots.",
+      "description": "Implement a week view showing 7 days with time-based slots for each day. Display events as colored blocks in their time slots.",
       "acceptanceCriteria": [
         "Week view displays 7 days of current week",
         "Each day shows hourly time slots",
@@ -620,6 +620,47 @@
       "priority": "P3",
       "dependencies": [
         "US-006"
+      ],
+      "passes": false,
+      "passed": false
+    },
+    {
+      "id": "US-031",
+      "title": "Add status bar",
+      "description": "Implement a status bar at the bottom of the screen showing current view mode, selected date, event count for current view, and current time. Mode indicator with vim-style notation (NORMAL, INSERT, etc.).",
+      "acceptanceCriteria": [
+        "Status bar displays at bottom of screen",
+        "Shows current view mode (Month/Week/Day/Year)",
+        "Shows selected date",
+        "Shows event count for current period",
+        "Shows current time",
+        "Shows vim mode when applicable (NORMAL/INSERT)",
+        "Updates in real-time",
+        "cargo test && cargo clippy passes"
+      ],
+      "priority": "P1",
+      "dependencies": [
+        "US-004"
+      ],
+      "passes": true,
+      "passed": true
+    },
+    {
+      "id": "US-032",
+      "title": "Apply category colors in UI",
+      "description": "Render events with their associated category colors in all views (month indicators, week/day blocks, event lists). Define default color palette for common categories.",
+      "acceptanceCriteria": [
+        "Default color palette defined (Work=blue, Personal=green, Meeting=yellow, etc.)",
+        "Events display with category color in side panel",
+        "Event indicators in month view use category color",
+        "Week/day view event blocks use category color",
+        "Color assignments customizable",
+        "Uncategorized events use default color",
+        "cargo test && cargo clippy passes"
+      ],
+      "priority": "P1",
+      "dependencies": [
+        "US-013"
       ],
       "passes": false,
       "passed": false

@@ -1,6 +1,7 @@
 /// UI components module
 mod event_modal;
 mod help_view;
+mod status_bar;
 
 use crossterm::{
     event::{self, Event, KeyCode, KeyModifiers},
@@ -17,6 +18,7 @@ use crate::views::MonthView;
 use crate::events::{Event as CalendarEvent, Category};
 use event_modal::{EventModal, ModalAction};
 use help_view::HelpView;
+use status_bar::StatusBar;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum InputMode {
@@ -31,6 +33,7 @@ pub struct App {
     pub state: CalendarState,
     pub month_view: MonthView,
     pub help_view: HelpView,
+    pub status_bar: StatusBar,
     pub input_mode: InputMode,
     pub input_buffer: String,
     pub event_modal: EventModal,
@@ -45,6 +48,7 @@ impl App {
             state: CalendarState::new(),
             month_view: MonthView::new(),
             help_view: HelpView::new(),
+            status_bar: StatusBar::new(),
             input_mode: InputMode::Normal,
             input_buffer: String::new(),
             event_modal: EventModal::new(),
@@ -90,36 +94,50 @@ impl App {
 
         let area = frame.area();
 
+        // Reserve 2 lines for status bar at the bottom
+        let chunks = Layout::default()
+            .direction(Direction::Vertical)
+            .constraints([
+                Constraint::Min(0),
+                Constraint::Length(2),
+            ])
+            .split(area);
+
+        let main_area = chunks[0];
+        let status_area = chunks[1];
+
         // Render help view if active (on top of everything)
         if self.help_view.active {
             // Render the calendar in the background
-            self.month_view.render(frame, area, &self.state);
-            // Then render help overlay
+            self.month_view.render(frame, main_area, &self.state);
+            // Then render help overlay (full screen)
             self.help_view.render(frame, area);
+            // Render status bar at bottom
+            self.status_bar.render(frame, status_area, self.input_mode, self.state.view_mode, self.month_view.selected_date, self.state.events.len());
             return;
         }
 
-        // If in date prompt mode, show a prompt at the bottom
+        // If in date prompt mode, show a prompt above the status bar
         if self.input_mode == InputMode::DatePrompt {
-            let chunks = Layout::default()
+            let date_chunks = Layout::default()
                 .direction(Direction::Vertical)
                 .constraints([
                     Constraint::Min(0),
                     Constraint::Length(3),
                 ])
-                .split(area);
+                .split(main_area);
 
-            self.month_view.render(frame, chunks[0], &self.state);
+            self.month_view.render(frame, date_chunks[0], &self.state);
 
             let prompt_text = format!("Go to date (YYYY-MM-DD): {}", self.input_buffer);
             let prompt = Paragraph::new(prompt_text)
                 .block(Block::default().borders(Borders::ALL).title(" Jump to Date "));
-            frame.render_widget(prompt, chunks[1]);
+            frame.render_widget(prompt, date_chunks[1]);
         } else {
-            self.month_view.render(frame, area, &self.state);
+            self.month_view.render(frame, main_area, &self.state);
         }
 
-        // Render modal if active
+        // Render modal if active (overlays on main area)
         if self.input_mode == InputMode::EventModal && self.event_modal.active {
             self.render_event_modal(frame, area);
         }
@@ -128,6 +146,9 @@ impl App {
         if self.input_mode == InputMode::DeleteConfirmation {
             self.render_delete_confirmation(frame, area);
         }
+
+        // Always render status bar at the bottom
+        self.status_bar.render(frame, status_area, self.input_mode, self.state.view_mode, self.month_view.selected_date, self.state.events.len());
     }
 
     fn render_event_modal(&self, frame: &mut ratatui::Frame, area: ratatui::layout::Rect) {
