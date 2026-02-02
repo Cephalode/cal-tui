@@ -15,7 +15,7 @@ use ratatui::{
 };
 use std::io;
 use crate::calendar::CalendarState;
-use crate::views::MonthView;
+use crate::views::{MonthView, WeekView};
 use crate::events::{Event as CalendarEvent, Category};
 use event_modal::{EventModal, ModalAction};
 use help_view::HelpView;
@@ -33,6 +33,7 @@ pub struct App {
     pub should_quit: bool,
     pub state: CalendarState,
     pub month_view: MonthView,
+    pub week_view: WeekView,
     pub help_view: HelpView,
     pub status_bar: StatusBar,
     pub input_mode: InputMode,
@@ -48,6 +49,7 @@ impl App {
             should_quit: false,
             state: CalendarState::new(),
             month_view: MonthView::new(),
+            week_view: WeekView::new(),
             help_view: HelpView::new(),
             status_bar: StatusBar::new(),
             input_mode: InputMode::Normal,
